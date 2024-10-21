@@ -39,7 +39,15 @@ struct SwiftLintCommandPlugin: CommandPlugin {
         Diagnostics.remark("currentDirectoryURL: \(process.currentDirectoryURL)")
         process.executableURL = URL(fileURLWithPath: try context.tool(named: "swiftlint").path.string)
         Diagnostics.remark("executableURL: \(process.executableURL)")
-        process.arguments = arguments
+
+        var filteredArguments = arguments
+        if let targetIndex = filteredArguments.firstIndex(of: "--target") {
+            filteredArguments.removeSubrange(targetIndex...targetIndex + 1)
+        }
+
+        print("filteredArguments: \(filteredArguments)")
+        process.arguments = filteredArguments
+
         if !arguments.contains("analyze") {
             // The analyze command does not support the `--cache-path` argument.
             process.arguments! += ["--cache-path", "\(context.pluginWorkDirectory.string)"]
