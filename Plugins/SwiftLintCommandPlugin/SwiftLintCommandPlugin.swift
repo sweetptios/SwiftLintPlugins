@@ -4,12 +4,14 @@ import PackagePlugin
 @main
 struct SwiftLintCommandPlugin: CommandPlugin {
     func performCommand(context: PluginContext, arguments: [String]) throws {
+        Diagnostics.remark("arguments: \(arguments)")
         guard !arguments.contains("--cache-path") else {
             Diagnostics.error("Caching is managed by the plugin and so setting `--cache-path` is not allowed")
             return
         }
         var argExtractor = ArgumentExtractor(arguments)
         let targetNames = argExtractor.extractOption(named: "target")
+        Diagnostics.remark("targetNames: \(targetNames)")
         let targets = targetNames.isEmpty
             ? context.package.targets
             : try context.package.targets(named: targetNames)
@@ -18,6 +20,7 @@ struct SwiftLintCommandPlugin: CommandPlugin {
             return
         }
         for target in targets {
+            Diagnostics.remark("target: \(target)")
             guard let target = target.sourceModule else {
                 Diagnostics.warning("Target '\(target.name)' is not a source module; skipping it")
                 continue
@@ -30,9 +33,12 @@ struct SwiftLintCommandPlugin: CommandPlugin {
                      for targetName: String? = nil,
                      with context: PluginContext,
                      arguments: [String]) throws {
+        Diagnostics.remark("directory: \(directory), taregtName: \(targetName)")
         let process = Process()
         process.currentDirectoryURL = URL(fileURLWithPath: context.package.directory.string)
+        Diagnostics.remark("currentDirectoryURL: \(process.currentDirectoryURL)")
         process.executableURL = URL(fileURLWithPath: try context.tool(named: "swiftlint").path.string)
+        Diagnostics.remark("executableURL: \(process.executableURL)")
         process.arguments = arguments
         if !arguments.contains("analyze") {
             // The analyze command does not support the `--cache-path` argument.
@@ -40,6 +46,7 @@ struct SwiftLintCommandPlugin: CommandPlugin {
         }
         process.arguments! += [directory]
 
+        Diagnostics.remark("arguments: \(process.arguments)")
         try process.run()
         process.waitUntilExit()
 
