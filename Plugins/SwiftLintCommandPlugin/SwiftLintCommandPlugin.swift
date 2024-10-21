@@ -33,11 +33,7 @@ struct SwiftLintCommandPlugin: CommandPlugin {
         let process = Process()
         process.currentDirectoryURL = URL(fileURLWithPath: context.package.directory.string)
         process.executableURL = URL(fileURLWithPath: try context.tool(named: "swiftlint").path.string)
-        var filteredArguments = arguments
-        if let targetIndex = filteredArguments.firstIndex(of: "--target") {
-            filteredArguments.removeSubrange(targetIndex...targetIndex + 1)
-        }
-        process.arguments = filteredArguments
+        process.arguments = removeTargetOptions(from: arguments)
         if !arguments.contains("analyze") {
             // The analyze command does not support the `--cache-path` argument.
             process.arguments! += ["--cache-path", "\(context.pluginWorkDirectory.string)"]
@@ -64,5 +60,23 @@ struct SwiftLintCommandPlugin: CommandPlugin {
                 """
             )
         }
+    }
+
+    private func removeTargetOptions(from arguments: [String]) -> [String] {
+        var filteredArguments = arguments
+        var index = 0
+
+        while index < filteredArguments.count {
+            if filteredArguments[index] == "--target" {
+                filteredArguments.remove(at: index)
+                if index < filteredArguments.count {
+                    filteredArguments.remove(at: index)
+                }
+            } else {
+                index += 1
+            }
+        }
+
+        return filteredArguments
     }
 }
